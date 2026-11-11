@@ -330,6 +330,16 @@
           <input type="url" id="lessPdfUrl" placeholder="Tute PDF Link" class="bg-agri-800 border border-agri-accent/30 p-2 rounded-lg text-white">
         </div>
         <button onclick="addNewLesson()" class="btn-agri px-4 py-1.5 rounded-lg text-xs font-bold">එකතු කරන්න</button>
+        <div class="mt-3 pt-3 border-t border-agri-accent/20 space-y-2">
+          <h5 class="font-bold text-[11px] text-agri-gold">📁 "වෙනත් පාඩම්" (Unit නැති පාඩම්) සියල්ල එක Unit එකකට දමන්න:</h5>
+          <div class="grid sm:grid-cols-3 gap-2 text-xs">
+            <select id="moveBatch" class="bg-agri-800 border border-agri-accent/30 p-2 rounded-lg text-white">
+              <option value="2027">2027 A/L</option><option value="2028">2028 A/L</option><option value="2029">2029 A/L</option><option value="2030">2030 A/L</option>
+            </select>
+            <input type="text" id="moveUnit" list="unitList" placeholder="උදා: දේශගුණය - Unit 2" class="sm:col-span-2 bg-agri-800 border border-agri-accent/30 p-2 rounded-lg text-white">
+          </div>
+          <button onclick="assignUnitToOthers()" class="btn-outline-agri px-4 py-1.5 rounded-lg text-xs font-bold">📦 Unit එකට මාරු කරන්න</button>
+        </div>
       </div>
 
       <!-- 4. Slips & Payment Management -->
@@ -958,10 +968,33 @@
           <div class="ep">${String(i + 1).padStart(2, '0')}</div>
           <div class="text-[10px] text-emerald-300">🗓️ <span class="font-bold text-agri-accent">${esc(d)}</span></div>
           <h3 class="font-bold text-white text-sm">${esc(l.title)}</h3>
+          ${isAdmin ? `<button onclick="moveLesson('${l.id}')" class="text-[10px] text-agri-gold underline">📁 Unit මාරු කරන්න</button>` : ''}
           <a href="${safeUrl(l.videoUrl)}" target="_blank" rel="noopener" class="btn-agri block text-center py-1.5 rounded-lg text-xs font-bold">🎥 Watch Recording</a>
           ${l.pdfUrl ? `<a href="${safeUrl(l.pdfUrl)}" target="_blank" rel="noopener" class="btn-outline-agri block text-center py-1.5 rounded-lg text-xs font-bold">📥 Download Tute PDF</a>` : ''}
         </div>`;
       }).join('');
+    }
+    async function assignUnitToOthers() {
+      const batch = document.getElementById('moveBatch').value, unit = document.getElementById('moveUnit').value.trim();
+      if (!unit) return alert("Unit එකේ නම ඇතුළත් කරන්න!");
+      try {
+        const snap = await db.collection('lessons').where('batch', '==', batch).get();
+        const todo = snap.docs.filter(d => !(d.data().unit || '').trim());
+        if (!todo.length) return alert(`${batch} A/L සඳහා Unit නැති පාඩම් නැත.`);
+        if (!confirm(`${batch} A/L හි Unit නැති පාඩම් ${todo.length} ක් "${unit}" Unit එකට දමන්නද?`)) return;
+        for (let i = 0; i < todo.length; i += 400) {
+          const b = db.batch(); todo.slice(i, i + 400).forEach(d => b.update(d.ref, { unit }));
+          await b.commit();
+        }
+        alert(`පාඩම් ${todo.length} ක් "${unit}" Unit එකට මාරු විය!`);
+      } catch (e) { alert("Error: " + e.message); }
+    }
+    async function moveLesson(id) {
+      const cur = lessonsAll.find(l => l.id === id); if (!cur) return;
+      const u = prompt("මෙම පාඩම දැමිය යුතු Unit එක:", cur.unit || '');
+      if (u === null) return;
+      try { await db.collection('lessons').doc(id).update({ unit: u.trim() }); }
+      catch (e) { alert("Error: " + e.message); }
     }
     function openPackView(i) { openPack = packGroups[i][0]; renderPackLessons(packGroups[i]); document.getElementById('lessonsPageModal').scrollTo({ top: 0, behavior: 'smooth' }); }
     function closePackView() { openPack = null; renderLessons(); }
