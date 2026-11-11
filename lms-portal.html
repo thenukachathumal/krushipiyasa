@@ -55,9 +55,39 @@
     .btn-agri:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(199, 239, 74, 0.4); }
     .btn-outline-agri { border: 2px solid #c7ef4a; color: #c7ef4a; transition: all 0.3s ease; }
     .btn-outline-agri:hover { background: rgba(199, 239, 74, 0.15); transform: translateY(-2px); }
+  
+    /* ===== 3D portal layer ===== */
+    #bg3d { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+    body > section { position: relative; z-index: 1; }
+    @keyframes rise3d { from { opacity: 0; transform: perspective(900px) translateY(40px) rotateX(-18deg); } to { opacity: 1; transform: none; } }
+    body > section:nth-of-type(1) { animation: rise3d .8s .1s both; }
+    body > section:nth-of-type(2) { animation: rise3d .8s .25s both; }
+    #payment-section > div { animation: rise3d .8s .4s both; }
+    #lessonsGrid { perspective: 1400px; }
+    .tilt3d { transform-style: preserve-3d; will-change: transform; transition: transform .15s, box-shadow .3s; }
+    .tilt3d::before { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+      background: radial-gradient(300px circle at var(--mx,50%) var(--my,0%), rgba(199,239,74,.18), transparent 55%); }
+    .pack3d { position: relative; display: block; width: 100%; text-align: left; padding: 22px 20px; border-radius: 24px; overflow: hidden; cursor: pointer;
+      background: linear-gradient(145deg, #065f46, #022c22); border: 1px solid rgba(199,239,74,.3);
+      box-shadow: 10px 10px 0 -3px #04382b, 20px 20px 0 -6px #033226, 0 25px 40px rgba(0,0,0,.45);
+      opacity: 0; animation: packIn .7s calc(var(--i) * .09s) cubic-bezier(.2,.9,.3,1.2) forwards; }
+    .pack3d:hover { box-shadow: 14px 14px 0 -3px #04382b, 26px 26px 0 -6px #033226, 0 30px 50px rgba(199,239,74,.18); }
+    .pack-ico { display: inline-block; font-size: 3rem; transform: translateZ(50px); animation: icoFloat 3s ease-in-out infinite; filter: drop-shadow(0 12px 12px rgba(0,0,0,.5)); }
+    .pack-title { font-weight: 800; color: #fff; font-size: 1.05rem; margin-top: 8px; transform: translateZ(30px); }
+    .pack-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; font-size: .7rem; color: #a7f3d0; }
+    .pack-meta span { background: rgba(2,44,34,.7); padding: 3px 10px; border-radius: 99px; border: 1px solid rgba(199,239,74,.2); }
+    .pack-open { margin-top: 14px; font-size: .75rem; font-weight: 800; color: #c7ef4a; }
+    .lesson3d { position: relative; padding: 16px; border-radius: 20px; background: linear-gradient(145deg, #064e3b, #033226); border: 1px solid rgba(199,239,74,.22);
+      box-shadow: 0 18px 30px rgba(0,0,0,.4); opacity: 0; animation: lessIn .6s calc(var(--i) * .07s) cubic-bezier(.2,.9,.3,1.1) forwards; }
+    .lesson3d .ep { position: absolute; top: -10px; right: 12px; font-size: 2.6rem; font-weight: 800; color: rgba(199,239,74,.16); transform: translateZ(40px); }
+    @keyframes packIn { from { opacity: 0; transform: translateY(50px) rotateX(-40deg) scale(.88); } to { opacity: 1; transform: none; } }
+    @keyframes lessIn { from { opacity: 0; transform: translateX(var(--dir,-60px)) rotateY(calc(var(--dir,-60px) / -2.4)); } to { opacity: 1; transform: none; } }
+    @keyframes icoFloat { 0%,100% { transform: translateZ(50px) translateY(0) rotateY(0); } 50% { transform: translateZ(50px) translateY(-8px) rotateY(20deg); } }
+    @media (prefers-reduced-motion: reduce) { .pack3d, .lesson3d, body > section, #payment-section > div { animation: none; opacity: 1; } .pack-ico { animation: none; } }
   </style>
 </head>
 <body class="bg-agri-900 text-slate-100 min-h-screen">
+  <canvas id="bg3d"></canvas>
 
   <!-- Navigation -->
   <nav class="fixed top-0 left-0 right-0 z-40 bg-agri-900/90 backdrop-blur-md border-b border-agri-accent/20 px-4 py-3.5">
@@ -146,7 +176,7 @@
   </section>
 
   <!-- Lessons Portal -->
-  <div id="lessonsPageModal" class="fixed inset-0 z-50 bg-agri-900 hidden flex-col overflow-y-auto p-4 sm:p-8">
+  <div id="lessonsPageModal" class="fixed inset-0 z-50 bg-agri-900/90 backdrop-blur-sm hidden flex-col overflow-y-auto p-4 sm:p-8">
     <div class="max-w-6xl mx-auto w-full">
       <div class="flex items-center justify-between border-b border-agri-accent/20 pb-4 mb-6">
         <div>
@@ -256,6 +286,10 @@
         <h4 class="font-bold text-xs text-white">📢 1. අලුත් නිවේදනයක් සටහන් කරන්න:</h4>
         <input type="text" id="adminNoticeInput" placeholder="නිවේදනය ඇතුළත් කරන්න..." class="w-full bg-agri-800 border border-agri-accent/30 p-2 rounded-lg text-xs text-white">
         <button onclick="saveNotice()" class="btn-agri px-4 py-1.5 rounded-lg text-xs font-bold">📲 පළ කරන්න</button>
+        <div class="mt-3 flex items-start justify-between gap-3 bg-agri-800/70 border border-agri-gold/30 rounded-xl p-3">
+          <div class="min-w-0"><p class="text-[10px] text-agri-gold font-bold mb-1">දැනට පළ කර ඇති නිවේදනය:</p><p id="currentNoticeAdmin" class="text-xs text-emerald-100 break-words">—</p></div>
+          <button id="delNoticeBtn" onclick="deleteNotice()" class="hidden shrink-0 bg-red-500/90 hover:bg-red-400 text-white px-3 py-1.5 rounded-lg text-xs font-bold">🗑️ මකන්න</button>
+        </div>
       </div>
 
       <!-- 2. Zoom Links Control Panel -->
@@ -290,6 +324,7 @@
             <option value="2027">2027 A/L</option><option value="2028">2028 A/L</option>
             <option value="2029">2029 A/L</option><option value="2030">2030 A/L</option>
           </select>
+          <input type="text" id="lessUnit" list="unitList" placeholder="Unit / පැක් එක (උදා: දේශගුණය - Unit 2)" class="sm:col-span-2 bg-agri-800 border border-agri-accent/30 p-2 rounded-lg text-white"><datalist id="unitList"></datalist>
           <input type="text" id="lessTitle" placeholder="මාතෘකාව (උදා: දේශගුණික විද්‍යාව | 01 කොටස)" class="bg-agri-800 border border-agri-accent/30 p-2 rounded-lg text-white">
           <input type="url" id="lessVideoUrl" placeholder="Video Link" class="bg-agri-800 border border-agri-accent/30 p-2 rounded-lg text-white">
           <input type="url" id="lessPdfUrl" placeholder="Tute PDF Link" class="bg-agri-800 border border-agri-accent/30 p-2 rounded-lg text-white">
@@ -347,7 +382,7 @@
           <table class="w-full text-left text-xs border-collapse" id="adminStudentTable">
             <thead>
               <tr class="bg-agri-800 text-agri-accent border-b border-agri-accent/20">
-                <th class="p-2">නම</th><th class="p-2">Batch</th><th class="p-2">Phone</th><th class="p-2">Guardian Phone</th><th class="p-2">ලිපිනය</th>
+                <th class="p-2">නම</th><th class="p-2">Batch</th><th class="p-2">Phone</th><th class="p-2">Guardian Phone</th><th class="p-2">ලිපිනය</th><th class="p-2">Action</th>
               </tr>
             </thead>
             <tbody id="studentTableBody" class="divide-y divide-agri-accent/10"></tbody>
@@ -390,14 +425,29 @@
     let isAdmin = false;
 
     db.collection('settings').doc('notice').onSnapshot(doc => {
-      if (doc.exists && doc.data().text) {
-        document.getElementById('noticeText').innerText = doc.data().text;
-      }
+      const has = doc.exists && doc.data().text;
+      document.getElementById('noticeText').innerText = has ? doc.data().text : 'නව නිවේදන කිසිවක් නැත.';
+      const cur = document.getElementById('currentNoticeAdmin');
+      if (cur) cur.innerText = has ? doc.data().text : '— පළ කර ඇති නිවේදනයක් නැත —';
+      const del = document.getElementById('delNoticeBtn');
+      if (del) del.classList.toggle('hidden', !has);
     });
+
+    async function deleteNotice() {
+      if (!confirm("දැනට පළ කර ඇති නිවේදනය මකා දමන්නද?")) return;
+      try { await db.collection('settings').doc('notice').delete(); }
+      catch (e) { alert("Error: " + e.message); }
+    }
 
     auth.onAuthStateChanged(async user => {
       if (user) {
         isAdmin = ADMIN_EMAILS.map(e => e.toLowerCase()).includes(user.email.toLowerCase());
+        if (!isAdmin) {
+          try {
+            const rm = await db.collection('removed_users').doc(user.uid).get();
+            if (rm.exists) { await auth.signOut(); alert("ඔබේ ගිණුම ඉවත් කර ඇත. වැඩි විස්තර සඳහා ගුරුවරයා අමතන්න."); return; }
+          } catch (e) {}
+        }
         
         const userDoc = await db.collection('users').doc(user.uid).get();
         if (userDoc.exists) {
@@ -618,42 +668,6 @@
       });
     }
 
-    function switchLessonBatch(batch) {
-      document.getElementById('lessonBatchSubtitle').innerText = `(${batch} A/L Batch එකට අදාළ පාඩම්)`;
-      const grid = document.getElementById('lessonsGrid');
-      grid.innerHTML = `<div class="col-span-full text-center py-10 text-agri-accent font-bold animate-pulse">පාඩම් එකතු වෙමින් පවතී...</div>`;
-
-      db.collection('lessons')
-        .where('batch', '==', batch)
-        .orderBy('title', 'asc')
-        .onSnapshot(s => {
-          grid.innerHTML = "";
-          
-          if(s.empty) {
-            grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 font-bold">මෙම Batch එක (${batch} A/L) සඳහා පාඩම් කිසිවක් තවම එකතු කර නැත.</div>`;
-            return;
-          }
-
-          s.forEach(doc => {
-            const l = doc.data();
-            const uploadedDate = l.createdAt ? new Date(l.createdAt.toDate()).toLocaleDateString('si-LK') : "නොදන්නා දිනයක්";
-            
-            grid.innerHTML += `
-              <div class="bg-agri-800 p-4 rounded-2xl border border-agri-accent/20 space-y-2 shadow-lg">
-                <div class="flex justify-between items-center text-[10px] text-emerald-300">
-                  <span>🗓️ එකතු කළ දිනය:</span>
-                  <span class="font-bold text-agri-accent">${uploadedDate}</span>
-                </div>
-                <h3 class="font-bold text-white text-sm">${l.title}</h3>
-                <a href="${l.videoUrl}" target="_blank" class="btn-agri block text-center py-1.5 rounded-lg text-xs font-bold">🎥 Watch Recording</a>
-                ${l.pdfUrl ? `<a href="${l.pdfUrl}" target="_blank" class="btn-outline-agri block text-center py-1.5 rounded-lg text-xs font-bold">📥 Download Tute PDF</a>` : ''}
-              </div>`;
-          });
-        }, err => {
-          grid.innerHTML = `<div class="col-span-full text-center py-10 text-red-400 font-bold">Error: ${err.message}</div>`;
-        });
-    }
-
     function openLessonsPage() {
       const user = auth.currentUser;
       if (!user) {
@@ -673,17 +687,17 @@
       if (user && isAdmin) {
         document.getElementById('adminModal').classList.remove('hidden');
         document.getElementById('adminModal').classList.add('flex');
-        loadPendingSlipsAdmin(); loadStudentsAdmin(); loadAttendanceAdmin(); loadZoomLinksAdmin();
+        loadPendingSlipsAdmin(); loadStudentsAdmin(); loadAttendanceAdmin(); loadZoomLinksAdmin(); loadUnitSuggestions();
       } else {
         alert("ඔබට Teacher Panel එකට පිවිසීමට අවසර නැත!");
       }
     }
 
     async function saveNotice() {
-      const text = document.getElementById('adminNoticeInput').value;
+      const text = document.getElementById('adminNoticeInput').value.trim();
       if (!text) return alert("කරුණාකර නිවේදනයක් සටහන් කරන්න!");
       await db.collection('settings').doc('notice').set({ text });
-      alert("Notice එක පළ විය!");
+      document.getElementById('adminNoticeInput').value = ''; alert("Notice එක පළ විය!");
     }
 
     async function loadZoomLinksAdmin() {
@@ -717,14 +731,26 @@
     }
 
     async function addNewLesson() {
-      await db.collection('lessons').add({
-        batch: document.getElementById('lessBatch').value,
-        title: document.getElementById('lessTitle').value,
-        videoUrl: document.getElementById('lessVideoUrl').value,
-        pdfUrl: document.getElementById('lessPdfUrl').value,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      const g = id => document.getElementById(id).value.trim();
+      if (!g('lessTitle') || !g('lessVideoUrl')) return alert("මාතෘකාව සහ Video Link අවශ්‍යයි!");
+      try {
+        await db.collection('lessons').add({
+          batch: g('lessBatch'), unit: g('lessUnit'), title: g('lessTitle'),
+          videoUrl: g('lessVideoUrl'), pdfUrl: g('lessPdfUrl'),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        ['lessTitle', 'lessVideoUrl', 'lessPdfUrl'].forEach(id => document.getElementById(id).value = '');
+        alert("පාඩම සාර්ථකව එකතු විය! (එම Unit එකටම තවත් පාඩම් එකතු කළ හැක)");
+      } catch (e) { alert("Error: " + e.message); }
+    }
+
+    function loadUnitSuggestions() {
+      if (window._unitSub) return;
+      window._unitSub = db.collection('lessons').onSnapshot(s => {
+        const set = new Set();
+        s.forEach(d => { const u = (d.data().unit || '').trim(); if (u) set.add(u); });
+        document.getElementById('unitList').innerHTML = [...set].map(u => `<option value="${esc(u)}">`).join('');
       });
-      alert("පාඩම සාර්ථකව එකතු විය!");
     }
 
     function loadPendingSlipsAdmin() {
@@ -827,12 +853,21 @@
         const tbody = document.getElementById('studentTableBody'); tbody.innerHTML = "";
         s.forEach(doc => {
           const st = doc.data();
-          tbody.innerHTML += `<tr data-batch="${st.batch}">
-            <td class="p-2 font-bold">${st.fullName || 'N/A'}</td><td class="p-2 text-agri-accent font-bold">${st.batch || 'N/A'} A/L</td>
-            <td class="p-2">${st.phone || 'N/A'}</td><td class="p-2">${st.guardianPhone || 'N/A'}</td><td class="p-2">${st.address || 'N/A'}</td>
+          tbody.innerHTML += `<tr data-batch="${esc(st.batch)}">
+            <td class="p-2 font-bold">${esc(st.fullName || 'N/A')}</td><td class="p-2 text-agri-accent font-bold">${esc(st.batch || 'N/A')} A/L</td>
+            <td class="p-2">${esc(st.phone || 'N/A')}</td><td class="p-2">${esc(st.guardianPhone || 'N/A')}</td><td class="p-2">${esc(st.address || 'N/A')}</td>
+            <td class="p-2"><button data-uid="${doc.id}" data-name="${esc(st.fullName || '')}" onclick="deleteStudent(this.dataset.uid, this.dataset.name)" class="text-red-400 hover:text-red-200 font-bold" title="ඉවත් කරන්න">🗑️</button></td>
           </tr>`;
         });
       });
+    }
+
+    async function deleteStudent(uid, name) {
+      if (!confirm(`"${name || 'මෙම සිසුවා'}" ලැයිස්තුවෙන් ඉවත් කරන්නද?\n(මොහුට නැවත Login වී පාඩම් බැලීමට නොහැකි වේ.)`)) return;
+      try { await db.collection('users').doc(uid).delete(); }
+      catch (e) { return alert("Error: " + e.message); }
+      try { await db.collection('removed_users').doc(uid).set({ fullName: name, removedAt: firebase.firestore.FieldValue.serverTimestamp() }); }
+      catch (e) { alert("ලැයිස්තුවෙන් ඉවත් කළා, නමුත් Login අවහිර කිරීම සටහන් කළ නොහැකි විය: " + e.message); }
     }
 
     function filterStudentsByBatch(batch) {
@@ -852,7 +887,7 @@
       let csv = "Name,Batch,Phone,GuardianPhone,Address\n";
       document.querySelectorAll('#studentTableBody tr').forEach(r => {
         const cols = Array.from(r.querySelectorAll('td')).map(c => `"${c.innerText}"`);
-        if(cols.length) csv += cols.join(",") + "\n";
+        if(cols.length) csv += cols.slice(0, 5).join(",") + "\n";
       });
       const blob = new Blob([csv], { type: 'text/csv' });
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -861,6 +896,133 @@
 
     function closeAdminModal() { document.getElementById('adminModal').classList.add('hidden'); }
     function triggerAccessCheck() { const u = auth.currentUser; if(u) checkAccessAndUnlock(u.uid); }
+  </script>
+
+  <script>
+    // ===== Pack (Unit) based lessons =====
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    function safeUrl(u) { return /^https?:\/\//i.test(u || '') ? esc(u) : '#'; }
+    function packIcon(n) {
+      const m = [[/දේශගුණ|climate/i, '🌦️'], [/පස|soil/i, '🪱'], [/ජල|water/i, '💧'], [/බෝග|වගා|crop/i, '🌾'], [/සත්ව|animal/i, '🐄'], [/ශාක|plant/i, '🌿'], [/ආර්ථික|econom/i, '📈']];
+      for (const [r, i] of m) if (r.test(n)) return i;
+      return '🌱';
+    }
+    const OTHER = '__other';
+    let lessonUnsub = null, lessonsAll = [], openPack = null, packGroups = [];
+
+    function switchLessonBatch(batch) {
+      openPack = null;
+      document.getElementById('lessonBatchSubtitle').innerText = `(${batch} A/L Batch එකට අදාළ පාඩම්)`;
+      const grid = document.getElementById('lessonsGrid');
+      grid.innerHTML = `<div class="col-span-full text-center py-10 text-agri-accent font-bold animate-pulse">පාඩම් එකතු වෙමින් පවතී...</div>`;
+      if (lessonUnsub) lessonUnsub();
+      lessonUnsub = db.collection('lessons').where('batch', '==', batch).orderBy('title', 'asc').onSnapshot(s => {
+        lessonsAll = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderLessons(batch);
+      }, err => {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-red-400 font-bold">Error: ${esc(err.message)}</div>`;
+      });
+    }
+
+    function renderLessons(batch) {
+      const grid = document.getElementById('lessonsGrid');
+      if (!lessonsAll.length) {
+        grid.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 font-bold">මෙම Batch එක (${esc(batch)} A/L) සඳහා පාඩම් කිසිවක් තවම එකතු කර නැත.</div>`;
+        return;
+      }
+      const m = new Map();
+      lessonsAll.forEach(l => { const k = (l.unit || '').trim() || OTHER; if (!m.has(k)) m.set(k, []); m.get(k).push(l); });
+      packGroups = [...m.entries()].sort((a, b) => a[0] === OTHER ? 1 : b[0] === OTHER ? -1 : a[0].localeCompare(b[0], 'si', { numeric: true }));
+      const cur = packGroups.find(g => g[0] === openPack);
+      if (cur) return renderPackLessons(cur);
+      openPack = null;
+      grid.innerHTML = packGroups.map(([k, ls], i) => {
+        const name = k === OTHER ? 'වෙනත් පාඩම්' : k, pdfs = ls.filter(l => l.pdfUrl).length;
+        return `<button class="pack3d tilt3d" style="--i:${i}" onclick="openPackView(${i})">
+          <div class="pack-ico">${k === OTHER ? '📦' : packIcon(name)}</div>
+          <div class="pack-title">${esc(name)}</div>
+          <div class="pack-meta"><span>🎥 වීඩියෝ ${ls.length}</span>${pdfs ? `<span>📄 PDF ${pdfs}</span>` : ''}</div>
+          <div class="pack-open">විවෘත කරන්න →</div></button>`;
+      }).join('');
+    }
+
+    function renderPackLessons([k, ls]) {
+      const name = k === OTHER ? 'වෙනත් පාඩම්' : k;
+      document.getElementById('lessonsGrid').innerHTML = `
+        <div class="col-span-full flex items-center justify-between gap-3 flex-wrap">
+          <button onclick="closePackView()" class="btn-outline-agri px-4 py-1.5 rounded-xl text-xs font-bold">← පැක් වලට ආපසු</button>
+          <h3 class="font-extrabold text-white text-lg">${k === OTHER ? '📦' : packIcon(name)} ${esc(name)} <span class="text-xs text-emerald-300 font-bold">(පාඩම් ${ls.length})</span></h3>
+        </div>` + ls.map((l, i) => {
+        const d = l.createdAt ? new Date(l.createdAt.toDate()).toLocaleDateString('si-LK') : '';
+        return `<div class="lesson3d tilt3d space-y-2" style="--i:${i};--dir:${i % 2 ? 60 : -60}px">
+          <div class="ep">${String(i + 1).padStart(2, '0')}</div>
+          <div class="text-[10px] text-emerald-300">🗓️ <span class="font-bold text-agri-accent">${esc(d)}</span></div>
+          <h3 class="font-bold text-white text-sm">${esc(l.title)}</h3>
+          <a href="${safeUrl(l.videoUrl)}" target="_blank" rel="noopener" class="btn-agri block text-center py-1.5 rounded-lg text-xs font-bold">🎥 Watch Recording</a>
+          ${l.pdfUrl ? `<a href="${safeUrl(l.pdfUrl)}" target="_blank" rel="noopener" class="btn-outline-agri block text-center py-1.5 rounded-lg text-xs font-bold">📥 Download Tute PDF</a>` : ''}
+        </div>`;
+      }).join('');
+    }
+    function openPackView(i) { openPack = packGroups[i][0]; renderPackLessons(packGroups[i]); document.getElementById('lessonsPageModal').scrollTo({ top: 0, behavior: 'smooth' }); }
+    function closePackView() { openPack = null; renderLessons(); }
+
+    // tilt + settle animations
+    document.addEventListener('animationend', e => {
+      const el = e.target;
+      if (el.classList && el.classList.contains('tilt3d') && /In$/.test(e.animationName)) { el.style.animation = 'none'; el.style.opacity = '1'; }
+    });
+    document.addEventListener('mousemove', e => {
+      const el = e.target.closest && e.target.closest('.tilt3d'); if (!el) return;
+      const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      el.style.transform = `perspective(900px) rotateX(${(.5 - y) * 14}deg) rotateY(${(x - .5) * 16}deg) translateZ(10px)`;
+      el.style.setProperty('--mx', x * 100 + '%'); el.style.setProperty('--my', y * 100 + '%');
+    });
+    document.addEventListener('mouseout', e => {
+      const el = e.target.closest && e.target.closest('.tilt3d');
+      if (el && !el.contains(e.relatedTarget)) el.style.transform = '';
+    });
+  </script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // ===== 3D background =====
+    addEventListener('DOMContentLoaded', function () {
+      if (!window.THREE || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var small = innerWidth < 700, cv = document.getElementById('bg3d');
+      var R = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: !small });
+      R.setPixelRatio(Math.min(devicePixelRatio, 2));
+      var sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(55, 1, .1, 100); cam.position.z = 14;
+      sc.add(new THREE.AmbientLight(0xbbffcc, .6));
+      var p1 = new THREE.PointLight(0xc7ef4a, 2, 40); p1.position.set(6, 5, 8); sc.add(p1);
+      var p2 = new THREE.PointLight(0xffc928, 1.4, 40); p2.position.set(-7, -4, 6); sc.add(p2);
+      var shp = new THREE.Shape(); shp.moveTo(0, 0); shp.quadraticCurveTo(.75, .6, 0, 1.7); shp.quadraticCurveTo(-.75, .6, 0, 0);
+      var lg = new THREE.ShapeGeometry(shp, 8), cols = [0x10b981, 0x34d399, 0xc7ef4a, 0xffc928], leaves = [];
+      for (var i = 0; i < (small ? 18 : 36); i++) {
+        var m = new THREE.Mesh(lg, new THREE.MeshStandardMaterial({ color: cols[i % 4], side: THREE.DoubleSide, roughness: .5, transparent: true, opacity: .85 }));
+        m.position.set((Math.random() - .5) * 30, (Math.random() - .5) * 26, (Math.random() - .5) * 12 - 3);
+        m.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6); m.scale.setScalar(.4 + Math.random() * .8);
+        m.userData = { vy: -.004 - Math.random() * .008, rx: (Math.random() - .5) * .015, ry: (Math.random() - .5) * .02, ph: Math.random() * 6 };
+        sc.add(m); leaves.push(m);
+      }
+      var fp = new Float32Array(300 * 3); for (var k = 0; k < fp.length; k++) fp[k] = (Math.random() - .5) * 32;
+      var fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.BufferAttribute(fp, 3));
+      var fl = new THREE.Points(fg, new THREE.PointsMaterial({ color: 0xfde68a, size: .09, transparent: true, opacity: .8 })); sc.add(fl);
+      var orb = new THREE.Group();
+      orb.add(new THREE.Mesh(new THREE.IcosahedronGeometry(2.2, 1), new THREE.MeshBasicMaterial({ color: 0xc7ef4a, wireframe: true, transparent: true, opacity: .3 })));
+      orb.add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 24), new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x047857, roughness: .4 })));
+      var ring = new THREE.Mesh(new THREE.TorusGeometry(3.1, .03, 8, 90), new THREE.MeshBasicMaterial({ color: 0xffc928, transparent: true, opacity: .55 })); ring.rotation.x = 1.2; orb.add(ring);
+      orb.position.set(small ? 4 : 9, 2, -4); sc.add(orb);
+      function rs() { R.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); }
+      addEventListener('resize', rs); rs();
+      var mx = 0, my = 0; addEventListener('mousemove', function (e) { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5; });
+      var ck = new THREE.Clock();
+      (function loop() {
+        requestAnimationFrame(loop); var t = ck.getElapsedTime();
+        cam.position.x += (mx * 2.2 - cam.position.x) * .04; cam.position.y += (-my * 1.5 - cam.position.y) * .04; cam.lookAt(0, 0, 0);
+        leaves.forEach(function (o) { var d = o.userData; o.position.y += d.vy; o.position.x += Math.sin(t + d.ph) * .004; o.rotation.x += d.rx; o.rotation.y += d.ry; if (o.position.y < -14) o.position.y = 14; });
+        orb.rotation.y = t * .3; orb.rotation.x = t * .12; fl.rotation.y = t * .02; p1.position.x = Math.sin(t * .6) * 8;
+        R.render(sc, cam);
+      })();
+    });
   </script>
 </body>
 </html>
